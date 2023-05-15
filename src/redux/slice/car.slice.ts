@@ -1,12 +1,14 @@
 import {createAsyncThunk, createSlice, isFulfilled, isRejectedWithValue} from "@reduxjs/toolkit";
 
-import {ICar, IError} from "../../interfaces";
+import {ICar, IError, IPagination} from "../../interfaces";
 import {carService} from "../../services";
 import {AxiosError} from "axios";
 
 
 interface IState {
     cars: ICar[],
+    prev: string,
+    next: string,
     errors: IError,
     trigger: boolean,
     carForUpdate: ICar
@@ -15,12 +17,14 @@ interface IState {
 
 const initialState: IState = {
     cars: [],
+    prev: null,
+    next: null,
     errors: null,
     carForUpdate: null,
     trigger: false
 };
 
-const getAll = createAsyncThunk<ICar[], void>(
+const getAll = createAsyncThunk<IPagination<any>, void>(
     'carSlice/getAll',
     async (_, {rejectWithValue}) => {
         try {
@@ -56,12 +60,12 @@ const update = createAsyncThunk<void, { car: ICar, id: number }>(
         }
     }
 )
-const deleteCar = createAsyncThunk<void,{id:number}>(
+const deleteCar = createAsyncThunk<void, { id: number }>(
     'carSlice/delete',
-    async ({id},{rejectWithValue})=>{
+    async ({id}, {rejectWithValue}) => {
         try {
             await carService.deleteById(id)
-        }catch (e){
+        } catch (e) {
             const err = e as AxiosError
             return rejectWithValue(err.response.data)
         }
@@ -80,7 +84,10 @@ const slice = createSlice({
     extraReducers: builder =>
         builder
             .addCase(getAll.fulfilled, (state, action) => {
-                state.cars = action.payload
+                const {prev, next, items} = action.payload
+                state.cars = items
+                state.prev = prev
+                state.next = next
             })
             // .addCase(create.fulfilled, state => {
             //     state.trigger = !state.trigger
@@ -88,10 +95,10 @@ const slice = createSlice({
             .addCase(update.fulfilled, state => {
                 state.carForUpdate = null
             })
-            .addMatcher(isFulfilled(), state=>{
+            .addMatcher(isFulfilled(), state => {
                 state.errors = null
             })
-            .addMatcher(isFulfilled(create, update,deleteCar), state => {
+            .addMatcher(isFulfilled(create, update, deleteCar), state => {
                 state.trigger = !state.trigger
             })
             .addMatcher(isRejectedWithValue(), (state, action) => {

@@ -1,15 +1,24 @@
-import {Ires} from "../types";
-import {ICar} from "../interfaces";
+import {IRes} from "../types";
+import {ICar, IPagination} from "../interfaces";
 import {axiosService} from "./axios.service";
 import {urls} from "../constants";
 
-const carService = {
-    getAll: (): Ires<ICar[]> => axiosService.get(urls.cars.cars),
-    create: (car: ICar): Ires<ICar> => axiosService.post(urls.cars.cars, car),
-    updateBuId: (id: number, car: ICar): Ires<ICar> => axiosService.put(urls.cars.byId(id), car),
-    deleteById: (id: number): Ires<void> => axiosService.delete(urls.cars.byId(id))
+class CarService {
+    getAll(): IRes<IPagination<ICar>> {
+        return axiosService.get(urls.cars.cars)
+    }
+
+    create(car: ICar): IRes<ICar> {
+        return axiosService.post(urls.cars.cars, car)
+    }
+
+    updateBuId(id: number, car: ICar): IRes<ICar> {
+        return axiosService.put(urls.cars.byId(id), car)
+    }
+
+    deleteById(id: number): IRes<void> {
+        return axiosService.delete(urls.cars.byId(id))
+    }
 }
 
-export {
-    carService
-}
+export const carService = new CarService()
